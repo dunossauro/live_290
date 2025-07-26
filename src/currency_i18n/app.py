@@ -3,9 +3,12 @@ import urllib.request
 from argparse import ArgumentParser
 from datetime import datetime
 from decimal import Decimal
+from gettext import gettext
+
+_ = gettext
 
 # Definição do CLI para escolher as moedas
-cli = ArgumentParser(description='BRL currency', epilog='Basic example of l10n')
+cli = ArgumentParser(description=_('BRL currency'), epilog='Basic example of l10n')
 
 cli.add_argument(
     '--currency',
