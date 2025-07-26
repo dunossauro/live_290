@@ -1,0 +1,21 @@
+[project]
+name = "currency-i18n"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "dunossauro",email = "mendesxeduardo@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+]
+
+[project.scripts]
+currency = "currency_i18n.cli:main"
+
+# Exemplo setuptools
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.mo"]
