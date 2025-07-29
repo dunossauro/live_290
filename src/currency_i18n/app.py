@@ -3,16 +3,26 @@ import urllib.request
 from argparse import ArgumentParser
 from datetime import datetime
 from decimal import Decimal
+from gettext import translation
+
+t = translation('messages', localedir='locale', fallback=True)
+
+t.install()
+
+_ = t.gettext
 
 # Definição do CLI para escolher as moedas
-cli = ArgumentParser(description='BRL currency', epilog='Basic example of l10n')
+cli = ArgumentParser(
+    description=_('BRL currency'),
+    epilog=_('Basic example of l10n'),
+)
 
 cli.add_argument(
     '--currency',
     '-c',
     choices=['BTC', 'USD', 'EUR'],
     type=str,
-    help='Reference currency for BRL comparison',
+    help=_('Reference currency for BRL comparison'),
     required=True,
     action='append',
 )
@@ -31,12 +41,13 @@ with urllib.request.urlopen(url) as response:
 # Tratamento e apresentação dos dados de saída
 cl = len(args.currency)
 
-if cl > 1:
-    print(
-        f'Requested {cl} currencies for comparison against BRL: {args.currency}'
-    )
-else:
-    print(f'Requested {args.currency[0]} currency for comparison against BRL')
+print(
+    t.ngettext(
+        'Requested %(currencies)s currency for comparison against BRL',
+	'Requested %(cl)s currencies for comparison against BRL: %(currencies)s',
+        cl,
+    ) % {'cl': cl, 'currencies': args.currency}
+)
 
 
 for currency in sorted(args.currency):
@@ -46,7 +57,15 @@ for currency in sorted(args.currency):
     if cl > 1:
         print(f'\n{currency}')
 
-    print(f'Last trade: {trade_time}')
-    print(f"Bid price: {Decimal(currency_data['bid']):n}")
-    print(f"Ask price: {Decimal(currency_data['ask']):n}")
-    print(f"Price variation: {Decimal(currency_data['varBid']):n}")
+    print(
+        _('Last trade: {trade_time}').format(trade_time=trade_time)
+    )
+    print(_('Bid price: {price}').format(
+        price=Decimal(currency_data['bid'])
+    ))
+    print(_('Ask price: {price}').format(
+        price=Decimal(currency_data['ask'])
+    ))
+    print(_('Price variation: {price}').format(
+        price=Decimal(currency_data['varBid'])
+    ))
