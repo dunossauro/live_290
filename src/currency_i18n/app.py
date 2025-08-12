@@ -1,15 +1,17 @@
 import json
+import locale
 import urllib.request
 from argparse import ArgumentParser
 from datetime import datetime
 from decimal import Decimal
 from gettext import translation
 
+localization, encode = locale.getlocale()
+
 t = translation('messages', localedir='locale', fallback=True)
-
-t.install()
-
+t.install(f'{localization}{encode}')
 _ = t.gettext
+
 
 # Definição do CLI para escolher as moedas
 cli = ArgumentParser(
@@ -27,7 +29,31 @@ cli.add_argument(
     action='append',
 )
 
+cli.add_argument(
+    '--language',
+    '-l',
+    choices=['pt_BR', 'en_US', 'eo'],
+    type=str,
+    default=localization,
+    required=True,
+    help=_('Prefered language fo the answer')
+)
+
 args = cli.parse_args()
+
+if args.language != localization:
+    # TODO: Arrumar um lugar melhor pra essa lógica
+    locale.setlocale(locale.LC_ALL, f'{args.language}.{encode}')
+    t = translation(
+        'messages',
+        localedir='locale',
+        fallback=True,
+        languages=[args.language]
+    )
+    t.install()
+    _ = t.gettext
+
+    
 
 # Requisição web para pegar os dados da cotação
 currencies = ','.join(f'{c}-BRL' for c in args.currency)
@@ -50,7 +76,7 @@ print(
 )
 
 
-for currency in sorted(args.currency):
+for currency in sorted(args.currency, key=locale.strxfrm):
     currency_data = response_json.get(f'{currency}BRL')
     trade_time = datetime.fromtimestamp(int(currency_data['timestamp']))
 
@@ -58,14 +84,27 @@ for currency in sorted(args.currency):
         print(f'\n{currency}')
 
     print(
-        _('Last trade: {trade_time}').format(trade_time=trade_time)
+        _('Last trade: {trade_time}').format(
+            trade_time=datetime.strftime(
+                trade_time, locale.nl_langinfo(locale.D_T_FMT)
+            )
+        )
     )
     print(_('Bid price: {price}').format(
-        price=Decimal(currency_data['bid'])
+        price=locale.currency(
+            Decimal(currency_data['bid']),
+            grouping=True,
+        )
     ))
     print(_('Ask price: {price}').format(
-        price=Decimal(currency_data['ask'])
+        price=locale.currency(
+            Decimal(currency_data['ask']),
+            grouping=True,
+        )
     ))
     print(_('Price variation: {price}').format(
-        price=Decimal(currency_data['varBid'])
+        price=locale.currency(
+            Decimal(currency_data['varBid']),
+            grouping=True,
+        )
     ))
